@@ -5,6 +5,7 @@ extern crate log;
 mod enigma;
 mod error;
 mod physical_rotor;
+mod plugboard;
 mod reflector;
 mod rotor;
 
