@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PhysicalRotor {
     pub name: &'static str,
     pub(crate) notches: Notches,
@@ -5,6 +6,7 @@ pub struct PhysicalRotor {
     pub(crate) wiring_reversed: Vec<u8>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Notches {
     Single(u8),
     Double(u8, u8),
@@ -72,5 +74,23 @@ impl PhysicalRotor {
             wiring,
             wiring_reversed: reversed.to_vec(),
         }
+    }
+}
+
+pub(crate) mod test {
+    use crate::physical_rotor::{KnownRotor, PhysicalRotor};
+    use proptest::prelude::*;
+
+    pub(crate) fn physical_rotor_strategy() -> impl Strategy<Value = PhysicalRotor> {
+        prop_oneof![
+            Just(PhysicalRotor::new(KnownRotor::I)),
+            Just(PhysicalRotor::new(KnownRotor::II)),
+            Just(PhysicalRotor::new(KnownRotor::III)),
+            Just(PhysicalRotor::new(KnownRotor::IV)),
+            Just(PhysicalRotor::new(KnownRotor::V)),
+            Just(PhysicalRotor::new(KnownRotor::VI)),
+            Just(PhysicalRotor::new(KnownRotor::VII)),
+            Just(PhysicalRotor::new(KnownRotor::VIII)),
+        ]
     }
 }
