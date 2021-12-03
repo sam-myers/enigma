@@ -1,7 +1,7 @@
-use log::debug;
 use crate::error::Result;
 use crate::reflector::Reflector;
 use crate::rotor::{Direction, Rotor};
+use log::debug;
 
 pub struct Enigma {
     rotor_left: Rotor,
@@ -88,7 +88,7 @@ mod tests {
     use crate::enigma::Enigma;
     use crate::physical_rotor::{KnownRotor, PhysicalRotor};
     use crate::reflector::{KnownReflector, Reflector};
-    use crate::rotor::{Rotor, RotorPosition, RotorRingSetting};
+    use crate::rotor::{Position, RingSetting, Rotor};
 
     #[test]
     fn test_simple() {
@@ -97,18 +97,18 @@ mod tests {
         let mut enigma = Enigma::new(
             Rotor::new(
                 PhysicalRotor::new(KnownRotor::I),
-                RotorRingSetting(0),
-                RotorPosition(0),
+                RingSetting(0),
+                Position(0),
             ),
             Rotor::new(
                 PhysicalRotor::new(KnownRotor::II),
-                RotorRingSetting(0),
-                RotorPosition(0),
+                RingSetting(0),
+                Position(0),
             ),
             Rotor::new(
                 PhysicalRotor::new(KnownRotor::III),
-                RotorRingSetting(0),
-                RotorPosition(0),
+                RingSetting(0),
+                Position(0),
             ),
             Reflector::new(KnownReflector::B),
         );
