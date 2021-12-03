@@ -38,7 +38,7 @@ impl Rotor {
             Direction::Backward => &self.physical.wiring_reversed,
         };
         let char_num: u8 = c as u8 - 65;
-        let shift = self.position.0 - self.ring_setting.0;
+        let shift = (26 + self.position.0 - self.ring_setting.0) % 26;
         let index: usize = ((char_num + shift + 26) % 26) as usize;
         let result_num = (wiring[index] + 26 - shift) % 26;
         Ok((result_num + 65) as char)
@@ -61,8 +61,9 @@ impl Rotor {
 }
 
 mod test {
+    use crate::error::EnigmaError;
     use crate::physical_rotor::test::physical_rotor_strategy;
-    use crate::rotor::{Position, RingSetting, Rotor};
+    use crate::rotor::{Direction, Position, RingSetting, Rotor};
     use proptest::prelude::*;
 
     prop_compose! {
@@ -70,6 +71,12 @@ mod test {
             Rotor::new(physical, RingSetting(setting), Position(position))
         }
     }
+
+    prop_compose! {
+    fn character()(c_int in 0..26u8) -> char {
+        (c_int + 65) as char
+    }
+}
 
     proptest! {
         #[test]
@@ -82,6 +89,26 @@ mod test {
             }
             rotor.rotate();
             prop_assert_eq!(&rotor, &saved_rotor);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn encypher_decypher(rotor in rotor_strategy(), plaintext in character()) {
+            let enciphered = rotor.encipher(plaintext, Direction::Forward).unwrap();
+            let deciphered = rotor.encipher(enciphered, Direction::Backward).unwrap();
+            prop_assert_eq!(plaintext, deciphered);
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn encypher_arbitrary_no_panic(rotor in rotor_strategy(), plaintext: char) {
+            let enciphered = rotor.encipher(plaintext, Direction::Forward);
+            match plaintext {
+                'A'..='Z' => prop_assert!(enciphered.is_ok()),
+                _ => prop_assert!(matches!(enciphered, Err(EnigmaError::InvalidChar(_)))),
+            }
         }
     }
 }
