@@ -1,4 +1,5 @@
 use crate::error::Result;
+use crate::plugboard::PlugBoard;
 use crate::reflector::Reflector;
 use crate::rotor::{Direction, Rotor};
 use log::debug;
@@ -7,6 +8,8 @@ pub struct Enigma {
     rotor_left: Rotor,
     rotor_middle: Rotor,
     rotor_right: Rotor,
+
+    plugboard: PlugBoard,
     reflector: Reflector,
 }
 
@@ -16,12 +19,14 @@ impl Enigma {
         rotor_middle: Rotor,
         rotor_right: Rotor,
         reflector: Reflector,
+        plugboard: PlugBoard,
     ) -> Self {
         Enigma {
             rotor_right,
             rotor_left,
             rotor_middle,
             reflector,
+            plugboard,
         }
     }
 
@@ -51,6 +56,9 @@ impl Enigma {
 
         let mut result = c;
 
+        result = self.plugboard.swap(&result);
+        trace!("Plugboard Encryption: {}", result);
+
         result = self.rotor_right.encipher(result, Direction::Forward)?;
         trace!("Wheel 3 Encryption: {}", result);
         result = self.rotor_middle.encipher(result, Direction::Forward)?;
@@ -67,6 +75,9 @@ impl Enigma {
         trace!("Wheel 2 Encryption: {}", result);
         result = self.rotor_right.encipher(result, Direction::Backward)?;
         trace!("Wheel 3 Encryption: {}", result);
+
+        result = self.plugboard.swap(&result);
+        trace!("Plugboard Encryption: {}", result);
 
         debug!("Output (Lampboard): {}", result);
         debug!("-----------------------------");
@@ -87,6 +98,7 @@ mod tests {
     // Testing against https://www.101computing.net/enigma-machine-emulator/
     use crate::enigma::Enigma;
     use crate::physical_rotor::{KnownRotor, PhysicalRotor};
+    use crate::plugboard::PlugBoard;
     use crate::reflector::{KnownReflector, Reflector};
     use crate::rotor::{Position, RingSetting, Rotor};
     use std::fmt::Write;
@@ -111,6 +123,7 @@ mod tests {
                 Position(0),
             ),
             Reflector::new(KnownReflector::B),
+            PlugBoard::new(vec![]),
         );
         let cleartext = "ABCDEFGHIJKLMNOPQRSTUVWXYZAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let expected = "BJELRQZVJWARXSNBXORSTNCFMEYHCXTGYJFLINHNXSHIUNTHEORXOPLOVFEKAGADSPNPCMHRVZCYECDAZIHVYGPITMSRZKGGHLSRBLHL";
@@ -140,6 +153,7 @@ mod tests {
                 Position(12),
             ),
             Reflector::new(KnownReflector::B),
+            PlugBoard::new(vec![]),
         );
         let cleartext = "ABCDEFGHIJKLMNOPQRSTUVWXYZAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let expected = "FOTYBPKLBZQSGZBOPUFYPFUSETWKNQQHVNHLKJZZZKHUBEJLGVUNIOYSDTEZJQHHAOYYZSENTGXNJCHEDFHQUCGCGJBURNSEDZSEPLQP";
@@ -169,6 +183,7 @@ mod tests {
                 Position(9),
             ),
             Reflector::new(KnownReflector::B),
+            PlugBoard::new(vec![]),
         );
         let mut cleartext = String::new();
         for _ in 0..500 {
@@ -182,5 +197,113 @@ mod tests {
             r#"GZQOVTTOIEGGHEFDOVSUQLLGNOOWGLCLOWSISUGSVIHWCMSIUUSBWQIGWEWRKQFQQRZHMQJNKQTJFDIJYHDFCWTHXUOOCVRCVYOHL"#,
         );
         assert_eq!(enigma.encrypt_string(cleartext), expected.to_string());
+    }
+
+    #[test]
+    fn test_plugboard_4_plugs() {
+        let _ = pretty_env_logger::try_init();
+        let mut enigma = Enigma::new(
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::I),
+                RingSetting(0),
+                Position(0),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::II),
+                RingSetting(0),
+                Position(0),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::III),
+                RingSetting(0),
+                Position(0),
+            ),
+            Reflector::new(KnownReflector::B),
+            PlugBoard::new(vec![('A', 'C'), ('F', 'G'), ('J', 'Y'), ('L', 'W')]),
+        );
+        let cleartext = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+        let expected = "QREBNMCYZELKQOJCGJVIVGLYEMUPCURPVPUMDIWXPPWROOQEGI";
+        assert_eq!(
+            enigma.encrypt_string(cleartext.to_string()),
+            expected.to_string()
+        );
+    }
+
+    #[test]
+    fn test_plugboard_6_plugs() {
+        let _ = pretty_env_logger::try_init();
+        let mut enigma = Enigma::new(
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::IV),
+                RingSetting(0),
+                Position(0),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::VI),
+                RingSetting(0),
+                Position(10),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::III),
+                RingSetting(0),
+                Position(6),
+            ),
+            Reflector::new(KnownReflector::B),
+            PlugBoard::new(vec![
+                ('B', 'M'),
+                ('D', 'H'),
+                ('R', 'S'),
+                ('K', 'N'),
+                ('G', 'Z'),
+                ('F', 'Q'),
+            ]),
+        );
+        let cleartext = "WRBHFRROSFHBCHVBENQFAGNYCGCRSTQYAJNROJAKVKXAHGUZHZVKWUTDGMBMSCYQSKABUGRVMIUOWAPKCMHYCRTSDEYTNJLVWNQY";
+        let expected = "FYTIDQIBHDONUPAUVPNKILDHDJGCWFVMJUFNJSFYZTSPITBURMCJEEAMZAZIJMZAVFCTYTKYORHYDDSXHBLQWPJBMSSWIPSWLENZ";
+        assert_eq!(
+            enigma.encrypt_string(cleartext.to_string()),
+            expected.to_string()
+        );
+    }
+
+    #[test]
+    fn test_plugboard_10_plugs() {
+        let _ = pretty_env_logger::try_init();
+        let mut enigma = Enigma::new(
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::I),
+                RingSetting(5),
+                Position(0),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::II),
+                RingSetting(5),
+                Position(1),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::III),
+                RingSetting(4),
+                Position(20),
+            ),
+            Reflector::new(KnownReflector::B),
+            PlugBoard::new(vec![
+                ('A', 'G'),
+                ('H', 'R'),
+                ('Y', 'T'),
+                ('K', 'I'),
+                ('F', 'L'),
+                ('W', 'E'),
+                ('N', 'M'),
+                ('S', 'D'),
+                ('O', 'P'),
+                ('Q', 'J'),
+            ]),
+        );
+        let cleartext = "RNXYAZUYTFNQFMBOLNYNYBUYPMWJUQSBYRHPOIRKQSIKBKEKEAJUNNVGUQDODVFQZHASHMQIHSQXICTSJNAUVZYIHVBBARPJADRH";
+        let expected = "CFBJTPYXROYGGVTGBUTEBURBXNUZGGRALBNXIQHVBFWPLZQSCEZWTAWCKKPRSWOGNYXLCOTQAWDRRKBCADTKZGPWSTNYIJGLVIUQ";
+        assert_eq!(
+            enigma.encrypt_string(cleartext.to_string()),
+            expected.to_string()
+        );
     }
 }

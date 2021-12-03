@@ -77,6 +77,7 @@ impl PhysicalRotor {
     }
 }
 
+#[cfg(test)]
 pub(crate) mod test {
     use crate::physical_rotor::{KnownRotor, PhysicalRotor};
     use proptest::prelude::*;

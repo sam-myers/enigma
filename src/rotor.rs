@@ -60,6 +60,7 @@ impl Rotor {
     }
 }
 
+#[cfg(test)]
 mod test {
     use crate::error::EnigmaError;
     use crate::physical_rotor::test::physical_rotor_strategy;
