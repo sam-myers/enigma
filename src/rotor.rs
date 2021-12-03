@@ -73,10 +73,10 @@ mod test {
     }
 
     prop_compose! {
-    fn character()(c_int in 0..26u8) -> char {
-        (c_int + 65) as char
+        fn character()(c_int in 0..26u8) -> char {
+            (c_int + 65) as char
+        }
     }
-}
 
     proptest! {
         #[test]
