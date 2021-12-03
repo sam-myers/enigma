@@ -91,7 +91,6 @@ pub(crate) mod test {
             Just(PhysicalRotor::new(KnownRotor::VI)),
             Just(PhysicalRotor::new(KnownRotor::VII)),
             Just(PhysicalRotor::new(KnownRotor::VIII)),
-            Just(PhysicalRotor::new(KnownRotor::IDENTITY)),
         ]
     }
 }

@@ -89,11 +89,11 @@ mod tests {
     use crate::physical_rotor::{KnownRotor, PhysicalRotor};
     use crate::reflector::{KnownReflector, Reflector};
     use crate::rotor::{Position, RingSetting, Rotor};
+    use std::fmt::Write;
 
     #[test]
-    fn test_simple() {
-        pretty_env_logger::init();
-
+    fn test_simple_rotors() {
+        let _ = pretty_env_logger::try_init();
         let mut enigma = Enigma::new(
             Rotor::new(
                 PhysicalRotor::new(KnownRotor::I),
@@ -112,12 +112,75 @@ mod tests {
             ),
             Reflector::new(KnownReflector::B),
         );
-
-        let cleartext = "AAAAAAAAAAAAAA";
-        let expected = "BDZGOWCXLTKSBT";
+        let cleartext = "ABCDEFGHIJKLMNOPQRSTUVWXYZAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let expected = "BJELRQZVJWARXSNBXORSTNCFMEYHCXTGYJFLINHNXSHIUNTHEORXOPLOVFEKAGADSPNPCMHRVZCYECDAZIHVYGPITMSRZKGGHLSRBLHL";
         assert_eq!(
             enigma.encrypt_string(cleartext.to_string()),
             expected.to_string()
         );
+    }
+
+    #[test]
+    fn test_varied_rotors() {
+        let _ = pretty_env_logger::try_init();
+        let mut enigma = Enigma::new(
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::VII),
+                RingSetting(1),
+                Position(10),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::V),
+                RingSetting(2),
+                Position(5),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::IV),
+                RingSetting(3),
+                Position(12),
+            ),
+            Reflector::new(KnownReflector::B),
+        );
+        let cleartext = "ABCDEFGHIJKLMNOPQRSTUVWXYZAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let expected = "FOTYBPKLBZQSGZBOPUFYPFUSETWKNQQHVNHLKJZZZKHUBEJLGVUNIOYSDTEZJQHHAOYYZSENTGXNJCHEDFHQUCGCGJBURNSEDZSEPLQP";
+        assert_eq!(
+            enigma.encrypt_string(cleartext.to_string()),
+            expected.to_string()
+        );
+    }
+
+    #[test]
+    fn test_long_phrase() {
+        let _ = pretty_env_logger::try_init();
+        let mut enigma = Enigma::new(
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::III),
+                RingSetting(11),
+                Position(3),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::VI),
+                RingSetting(13),
+                Position(5),
+            ),
+            Rotor::new(
+                PhysicalRotor::new(KnownRotor::VIII),
+                RingSetting(19),
+                Position(9),
+            ),
+            Reflector::new(KnownReflector::B),
+        );
+        let mut cleartext = String::new();
+        for _ in 0..500 {
+            let _ = write!(&mut cleartext, "A").unwrap();
+        }
+        let expected = concat!(
+            r#"YJKJMFQKPCUOCKTEZQVXYZJWJFROVJMWJVXRCQYFCUVBRELVHRWGPYGCHVLBVJEVTTYVMWKJFOZHLJEXYXRDBEVEHVXKQSBPYZN"#,
+            r#"IQDCBGTDDWZQWLHIBQNTYPIEBMNINNGMUPPGLSZCBRJULOLNJSOEDLOBXXGEVTKCOTTLDZPHBUFKLWSFSRKOMXKZELBDJNRUDUCO"#,
+            r#"TNCGLIKVKMHHCYDEKFNOECFBWRIEFQQUFXKKGNTSTVHVITVHDFKIJIHOGMDSQUFMZCGGFZMJUKGDNDSNSJKWKENIRQKSUUHJYMIG"#,
+            r#"WWNMIESFRCVIBFSOUCLBYEEHMESHSGFDESQZJLTORNFBIFUWIFJTOPVMFQCFCFPYZOJFQRFQZTTTOECTDOOYTGVKEWPSZGHCTQRP"#,
+            r#"GZQOVTTOIEGGHEFDOVSUQLLGNOOWGLCLOWSISUGSVIHWCMSIUUSBWQIGWEWRKQFQQRZHMQJNKQTJFDIJYHDFCWTHXUOOCVRCVYOHL"#,
+        );
+        assert_eq!(enigma.encrypt_string(cleartext), expected.to_string());
     }
 }
